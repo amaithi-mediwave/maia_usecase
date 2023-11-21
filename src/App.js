@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
 import './App.css';
+import AzureTextSummarization from './Transcription';
+import AlertBox from './AlertBox';
 
 import Typography from "@material-ui/core/Typography";
 import WaveformVisualizer from "./WaveformVisualizer";
@@ -11,12 +13,29 @@ import { PulseLoader } from "react-spinners";
 
 function App() {
 
-  const [transcription, setTranscription] = useState();
+  const [transcription, setTranscription] = useState('');
   const [recentTranscription, setrecentTranscription] = useState('');
   const [latestTranscription, setlatestTranscription] = useState('');
   const [error, setError] = useState('');
   const [recognizer, setRecognizer] = useState(null);
-let transcription_array = []
+  const [canTranscribe, setcanTranscribe] = useState(false);
+
+  const [showAlert, setshowAlert] = useState(false);
+  // setshowAlert(true)
+  const [alertContext, setalertContext] = useState({});
+
+  const API = ""
+  const API1 = ''
+  const REGION = ''
+  const ENDPOINT = 'https://.cognitiveservices.azure.com/'
+
+  const doc = [`The bush began to shake. Brad couldn't see what was causing it to shake, but he didn't care. he had a pretty good idea about what was going on and what was happening. He was so confident that he approached the bush carefree and with a smile on his face. That all changed the instant he realized what was actually behind the bush.
+  She's asked the question so many times that she barely listened to the answers anymore. The answers were always the same. Well, not exactly the same, but the same in a general sense. A more accurate description was the answers never surprised her. So, she asked for the 10,000th time, "What's your favorite animal?" But this time was different. When she heard the young boy's answer, she wondered if she had heard him correctly.
+  Have you ever wondered about toes? Why 10 toes and not 12. Why are some bigger than others? Some people can use their toes to pick up things while others can barely move them on command. Some toes are nice to look at while others are definitely not something you want to look at. Toes can be stubbed and make us scream. Toes help us balance and walk. 10 toes are just something to ponder.
+  Then came the night of the first falling star. It was seen early in the morning, rushing over Winchester eastward, a line of flame high in the atmosphere. Hundreds must have seen it and taken it for an ordinary falling star. It seemed that it fell to earth about one hundred miles east of him.`]
+
+
+  let transcription_array = []
   useEffect(() => {
     return () => {
       if (recognizer) {
@@ -25,9 +44,19 @@ let transcription_array = []
     };
   }, [recognizer]);
 
+
+// const alertTrigger = (mes, sev) => {
+//   setalertContext({message: mes, severity:sev});
+//   setshowAlert(true);
+//   console.log(showAlert);
+// };
+
+
+
+
   const startListening = async () => {
     try {
-      const speechConfig = sdk.SpeechConfig.fromSubscription("", "");
+      const speechConfig = sdk.SpeechConfig.fromSubscription(API, REGION);
       const audioConfig = sdk.AudioConfig.fromDefaultMicrophoneInput();
 
       const conversationTranscriber = new sdk.ConversationTranscriber(speechConfig, audioConfig);
@@ -63,7 +92,7 @@ let transcription_array = []
         // console.log(transcription_array)
 
         // setTranscription((prevData) => [...prevData, e.result.text])
-        
+
         // let id = 0
 
         // setTranscription.push({
@@ -73,12 +102,27 @@ let transcription_array = []
         // })
         // setrecentTranscription = transcription[transcription.length - 1]
         // // setrecentTranscription((prevTranscription) => prevTranscription
-        // console.log(recentTranscription)
+        // console.log(transcription)
       };
 
       conversationTranscriber.startTranscribingAsync(
         () => {
           console.log('Continuous transcription started');
+          
+          setalertContext({message:"Continuous transcription started", severity:'info'});
+          // console.log(showAlert)
+          
+          // alertTrigger("Continuous transcription started", 'info')
+
+          // useEffect(() => {
+          //   setalertContext({message:"Continuous transcription started", severity:'info'});
+          //   setshowAlert(true);
+            
+        // }, [setalertContext, setshowAlert]);
+
+          setshowAlert(true);
+          // console.log(showAlert)
+
         },
         (err) => {
           console.error('Error starting continuous transcription:', err);
@@ -98,8 +142,10 @@ let transcription_array = []
       recognizer.stopTranscribingAsync(
         () => {
           console.log('Continuous transcription stopped');
+          setcanTranscribe(true)
         },
         (err) => {
+
           console.error('Error stopping continuous transcription:', err);
           setError(`Error stopping continuous transcription: ${err}`);
         }
@@ -109,7 +155,13 @@ let transcription_array = []
 
   return (
     <div>
-    <div className="title">
+    {/* {showAlert && (<AlertBox
+                   message= {alertContext.message}
+                   severity= {alertContext.severity}
+                   timeout={5000}
+                   onClose={() => setshowAlert(false)} />) } */}
+
+      <div className="title">
         <Typography variant="h3">
           Speech Transcripter {" "}
           <span role="img" aria-label="microphone-emoji">
@@ -126,6 +178,13 @@ let transcription_array = []
         {/* <TranscribeOutput data={transcription} /> */}
         {/* <p>{recentTranscription}</p> */}
         {/* <p>{transcription}</p> */}
+
+        {canTranscribe && (<AzureTextSummarization
+          documents={[transcription]}
+          apiKey={API1}
+          endpoint={ENDPOINT}
+          setcanTranscribe = {setcanTranscribe}
+        />)}
       </div>
     </div>
 
